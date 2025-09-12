@@ -1,0 +1,23 @@
+# compiled output
+/output
+/output.asm
+/output.o
+
+# python virtual environments
+/.venv
+/venv
+*.pyc
+__pycache__/
+
+# caches
+/tmp
+*.b_cache.json
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db

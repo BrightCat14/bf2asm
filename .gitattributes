@@ -1,0 +1,4 @@
+*.py text=auto
+*.b text=auto
+.gitignore text=auto
+.gitattributes text=auto

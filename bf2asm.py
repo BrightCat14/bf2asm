@@ -1,0 +1,166 @@
+import json
+import os
+import sys
+from pathlib import Path
+
+class BFSyntaxError(Exception):
+    pass
+
+# multi-backends
+BACKENDS = {
+    ("x86_64", "linux"): {
+        "ptr_init": "mov rsi, tape",
+        "inc_ptr": "inc rsi",
+        "dec_ptr": "dec rsi",
+        "inc_val": "inc byte [rsi]",
+        "dec_val": "dec byte [rsi]",
+        "output": """mov rax, 1
+mov rdi, 1
+mov rdx, 1
+mov rsi, rsi
+syscall""",
+        "input": """mov rax, 0
+mov rdi, 0
+mov rdx, 1
+mov rsi, rsi
+syscall""",
+        "exit": "mov rax, 60\nxor rdi,rdi\nsyscall",
+        "header": "section .bss\n    tape resb 30000\nsection .text\nglobal _start\n_start:"
+    },
+    ("arm64", "linux"): {
+        "ptr_init": "adr x19, tape",
+        "inc_ptr": "add x19, x19, #1",
+        "dec_ptr": "sub x19, x19, #1",
+        "inc_val": "ldrb w0, [x19]\nadd w0, w0, #1\nstrb w0, [x19]",
+        "dec_val": "ldrb w0, [x19]\nsub w0, w0, #1\nstrb w0, [x19]",
+        "output": """mov x0, #1
+mov x2, #1
+mov x1, x19
+mov x8, #64
+svc 0""",
+        "input": """mov x0, #0
+mov x2, #1
+mov x1, x19
+mov x8, #63
+svc 0""",
+        "exit": "mov x8, #93\nmov x0, #0\nsvc 0",
+        "header": ".bss\n    tape: .space 30000\n.text\nglobal _start\n_start:"
+    }
+}
+
+
+def main():
+    # load extra backends from backends.json if exists
+    json_path = os.path.join(Path.home(), "bf2asm", "backends.json")
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            extra = json.load(f)
+        for k, v in extra.items():
+            arch, os_name = k.split("_", 1)
+            BACKENDS[(arch, os_name)] = v
+
+    # check arguments
+    if len(sys.argv) < 5:
+        print(f"Usage: python {sys.argv[0]} <arch> <os> <input.bf> <output.asm>")
+        sys.exit(1)
+
+    arch, os_name, bf_file = sys.argv[1], sys.argv[2], sys.argv[3]
+    backend = BACKENDS.get((arch, os_name))
+    if not backend:
+        print(f"Backend for {arch}/{os_name} not implemented yet")
+        sys.exit(1)
+
+    # determine cache path
+    if os.name == "nt":
+        temp_dir = os.environ.get("TEMP", ".")
+    else:
+        temp_dir = "/tmp"
+
+    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + ".bf_cache.json")
+    cache = {}
+
+    if os.path.exists(cache_file):
+        with open(cache_file) as f:
+            cache = json.load(f)
+
+    # read bf code
+    with open(bf_file) as f:
+        bf_code = f.read()
+
+    # validate bracket balance
+    balance = 0
+    for c in bf_code:
+        if c == '[':
+            balance += 1
+        elif c == ']':
+            balance -= 1
+        if balance < 0:
+            raise BFSyntaxError("Unmatched ']' in bf code")
+    if balance > 0:
+        raise BFSyntaxError("Unmatched '[' in bf code")
+
+    # generate asm with cache, keeping loop_stack across chunks
+    asm_code = backend["header"] + "\n    " + backend["ptr_init"] + "\n"
+    chunk_size = 50
+
+    loop_stack = []
+    label_id = 0
+
+    i = 0
+    while i < len(bf_code):
+        chunk = bf_code[i:i+chunk_size]
+        if chunk in cache:
+            # load cached asm
+            asm_code += cache[chunk]
+            i += chunk_size
+            continue
+
+        chunk_asm = ""
+        j = 0
+        while j < len(chunk):
+            c = chunk[j]
+            if c == '>':
+                chunk_asm += f"    {backend['inc_ptr']}\n"
+            elif c == '<':
+                chunk_asm += f"    {backend['dec_ptr']}\n"
+            elif c == '+':
+                chunk_asm += f"    {backend['inc_val']}\n"
+            elif c == '-':
+                chunk_asm += f"    {backend['dec_val']}\n"
+            elif c == '.':
+                chunk_asm += f"    {backend['output']}\n"
+            elif c == ',':
+                chunk_asm += f"    {backend['input']}\n"
+            elif c == '[':
+                start_label = f"loop_start_{label_id}"
+                end_label = f"loop_end_{label_id}"
+                loop_stack.append((start_label, end_label))
+                chunk_asm += f"{start_label}:\n    cmp byte [rsi], 0\n    je {end_label}\n"
+                label_id += 1
+            elif c == ']':
+                if not loop_stack:
+                    raise BFSyntaxError("Unmatched ']' in bf code during generation")
+                start_label, end_label = loop_stack.pop()
+                chunk_asm += f"    cmp byte [rsi], 0\n    jne {start_label}\n{end_label}:\n"
+            j += 1
+
+        # store generated chunk in cache
+        cache[chunk] = chunk_asm
+        asm_code += chunk_asm
+        i += chunk_size
+
+    # add exit syscall
+    asm_code += f"    {backend['exit']}\n"
+
+    # write output.asm
+    with open(sys.argv[4], "w") as f:
+        f.write(asm_code)
+
+    # update cache
+    with open(cache_file, "w") as f:
+        json.dump(cache, f, indent=2)
+
+    print(f"asm generated in output.asm (cache stored in {cache_file})")
+
+if __name__ == "__main__":
+    main()
