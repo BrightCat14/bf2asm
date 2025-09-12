@@ -1,7 +1,8 @@
 # compiled output
-/output
-/output.asm
-/output.o
+*.o
+*.asm
+*.elf
+*.exe
 
 # python virtual environments
 /.venv

@@ -91,6 +91,15 @@ Format example:
 
 ---
 
+## Images
+
+Hello World!:
+![HelloWorld Example](images/helloworld.png)
+"Binary" to ASCII:
+![bin-to-ascii Example](images/bin-to-ascii.png)
+
+---
+
 ## License
 
 MIT License - feel free to use or modify.
