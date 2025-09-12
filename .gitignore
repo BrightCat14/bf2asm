@@ -3,6 +3,7 @@
 *.asm
 *.elf
 *.exe
+*.obj
 
 # python virtual environments
 /.venv

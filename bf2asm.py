@@ -70,36 +70,24 @@ svc 0""",
         "dec_ptr": "dec rsi",
         "inc_val": "inc byte [rsi]",
         "dec_val": "dec byte [rsi]",
-        "output": """; call WriteFile(stdout, rsi, 1, NULL, NULL)
-mov rcx, -11              ; STD_OUTPUT_HANDLE
-call GetStdHandle
-mov rcx, rax              ; hConsole
-mov rdx, rsi              ; lpBuffer
-mov r8, 1                 ; nNumberOfBytesToWrite
-mov r9, written           ; lpNumberOfBytesWritten
-sub rsp, 32               ; shadow space
-call WriteFile
-add rsp, 32""",
-        "input": """; call ReadFile(stdin, rsi, 1, NULL, NULL)
-mov rcx, -10              ; STD_INPUT_HANDLE
-call GetStdHandle
-mov rcx, rax              ; hConsole
-mov rdx, rsi              ; lpBuffer
-mov r8, 1                 ; nNumberOfBytesToRead
-mov r9, read              ; lpNumberOfBytesRead
-sub rsp, 32
-call ReadFile
-add rsp, 32""",
-        "exit": """mov rcx, 0
-call ExitProcess""",
-        "header": """section .bss
+        "output": """movzx rdx, byte [rsi]
+    lea rcx, [rel fmt]   
+    xor rax, rax           
+    call printf""",
+        "input": """call getchar
+    mov [rsi], al""",
+        "exit": "ret",
+        "header": """section .data
+    fmt db "%c",0
+
+    section .bss
     tape resb 30000
-    written resq 1
-    read resq 1
-section .text
-global main
-extern GetStdHandle, WriteFile, ReadFile, ExitProcess
-main:"""
+
+    section .text
+    global main
+    extern printf, getchar
+    main:
+        mov rsi, tape"""
     }
 }
 
@@ -197,6 +185,13 @@ def main():
                     raise BFSyntaxError("Unmatched ']' in bf code during generation")
                 start_label, end_label = loop_stack.pop()
                 chunk_asm += f"    cmp byte [rsi], 0\n    jne {start_label}\n{end_label}:\n"
+            elif c == '#':
+                comment_text = ""
+                while j < len(chunk) and chunk[j] != '\n':
+                    comment_text += chunk[j]
+                    j += 1
+                chunk_asm += f"    ; {comment_text.lstrip("# ")}\n"
+                continue
             j += 1
 
         # store generated chunk in cache
