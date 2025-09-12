@@ -45,6 +45,43 @@ mov x8, #63
 svc 0""",
         "exit": "mov x8, #93\nmov x0, #0\nsvc 0",
         "header": ".bss\n    tape: .space 30000\n.text\nglobal _start\n_start:"
+    },
+    ("x86_64", "windows"): {
+        "ptr_init": "mov rsi, tape",
+        "inc_ptr": "inc rsi",
+        "dec_ptr": "dec rsi",
+        "inc_val": "inc byte [rsi]",
+        "dec_val": "dec byte [rsi]",
+        "output": """; call WriteFile(stdout, rsi, 1, NULL, NULL)
+mov rcx, -11              ; STD_OUTPUT_HANDLE
+call GetStdHandle
+mov rcx, rax              ; hConsole
+mov rdx, rsi              ; lpBuffer
+mov r8, 1                 ; nNumberOfBytesToWrite
+mov r9, written           ; lpNumberOfBytesWritten
+sub rsp, 32               ; shadow space
+call WriteFile
+add rsp, 32""",
+        "input": """; call ReadFile(stdin, rsi, 1, NULL, NULL)
+mov rcx, -10              ; STD_INPUT_HANDLE
+call GetStdHandle
+mov rcx, rax              ; hConsole
+mov rdx, rsi              ; lpBuffer
+mov r8, 1                 ; nNumberOfBytesToRead
+mov r9, read              ; lpNumberOfBytesRead
+sub rsp, 32
+call ReadFile
+add rsp, 32""",
+        "exit": """mov rcx, 0
+call ExitProcess""",
+        "header": """section .bss
+    tape resb 30000
+    written resq 1
+    read resq 1
+section .text
+global main
+extern GetStdHandle, WriteFile, ReadFile, ExitProcess
+main:"""
     }
 }
 
