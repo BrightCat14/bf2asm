@@ -10,12 +10,17 @@ from colorama import Fore
 colorama.init()
 
 name = "bf2asm"
+short_name = "b2a"
+
 def error_print(s):
     print(f"{Fore.RED}{s}{Fore.RESET}")
+
 def success_print(s):
     print(f"{Fore.GREEN}{s}{Fore.RESET}")
+
 def warning_print(s):
     print(f"{Fore.YELLOW}{s}{Fore.RESET}")
+
 def err_hook(exc_type, exc_value, exc_traceback):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
     error_print(tb)
@@ -107,19 +112,23 @@ def main():
         warning_print(f"Usage: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
-    arch, os_name, bf_file = sys.argv[1], sys.argv[2], sys.argv[3]
+    arch, os_name, bf_file, output_file = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
     backend = BACKENDS.get((arch, os_name))
     if not backend:
         error_print(f"Backend for {arch}/{os_name} not implemented yet")
         sys.exit(1)
 
     # determine cache path
-    if os.name == "nt":
-        temp_dir = os.environ.get("TEMP", ".")
+    b2a_tmp = os.getenv(f"{short_name.upper()}_TMP")
+    if b2a_tmp is None:
+        if os.name == "nt":
+            temp_dir = os.getenv("TEMP", ".")
+        else:
+            temp_dir = "/tmp"
     else:
-        temp_dir = "/tmp"
+        temp_dir = b2a_tmp
 
-    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + ".b_cache.json")
+    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + f"-{os_name}_{arch}.b_cache.json")
     cache = {}
 
     if os.path.exists(cache_file):
@@ -203,7 +212,7 @@ def main():
     asm_code += f"    {backend['exit']}\n"
 
     # write output.asm
-    with open(sys.argv[4], "w") as f:
+    with open(output_file, "w") as f:
         f.write(asm_code)
 
     # update cache
