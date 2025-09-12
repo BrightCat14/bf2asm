@@ -1,6 +1,6 @@
 # Contributing to bf2asm
 
-Thank you for your interest in contributing to **bf2asm** - we’re building a hobby operating system, and *every contribution matters*, no matter how big or small! ❤️
+Thank you for your interest in contributing to **bf2asm** - we’re creating a script to convert your BF code to ASM, and *every contribution matters*, no matter how big or small! ❤️
 
 ## New to contributing?
 
@@ -38,7 +38,7 @@ Found something weird? Let us know!
   * What happened
   * What you expected to happen
   * Steps to reproduce (if possible)
-  * Your system/setup (OS, toolchain, etc.)
+  * Your system/setup (OS, etc.)
   * Any relevant output/logs
 
 ## Thanks again!
