@@ -61,7 +61,7 @@ def main():
 
     # check arguments
     if len(sys.argv) < 5:
-        print(f"Usage: python {sys.argv[0]} <arch> <os> <input.bf> <output.asm>")
+        print(f"Usage: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
     arch, os_name, bf_file = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -76,7 +76,7 @@ def main():
     else:
         temp_dir = "/tmp"
 
-    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + ".bf_cache.json")
+    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + ".b_cache.json")
     cache = {}
 
     if os.path.exists(cache_file):
