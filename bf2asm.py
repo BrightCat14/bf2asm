@@ -128,7 +128,14 @@ def main():
     else:
         temp_dir = b2a_tmp
 
-    cache_file = os.path.join(temp_dir, os.path.basename(bf_file) + f"-{os_name}_{arch}.b_cache.json")
+    if not temp_dir == b2a_tmp:
+        named_tmp = os.path.join(temp_dir, name)
+    else:
+        named_tmp = temp_dir
+    if not os.path.exists(named_tmp):
+        os.mkdir(named_tmp)
+
+    cache_file = os.path.join(named_tmp, os.path.basename(bf_file) + f"-{os_name}_{arch}.b_cache.json")
     cache = {}
 
     if os.path.exists(cache_file):
