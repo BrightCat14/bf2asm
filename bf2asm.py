@@ -1,7 +1,25 @@
 import json
 import os
 import sys
+import traceback
 from pathlib import Path
+
+import colorama
+from colorama import Fore
+
+colorama.init()
+
+name = "bf2asm"
+def error_print(s):
+    print(f"{Fore.RED}{s}{Fore.RESET}")
+def success_print(s):
+    print(f"{Fore.GREEN}{s}{Fore.RESET}")
+def warning_print(s):
+    print(f"{Fore.YELLOW}{s}{Fore.RESET}")
+def err_hook(exc_type, exc_value, exc_traceback):
+    tb = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    error_print(tb)
+sys.excepthook = err_hook
 
 class BFSyntaxError(Exception):
     pass
@@ -88,7 +106,7 @@ main:"""
 
 def main():
     # load extra backends from backends.json if exists
-    json_path = os.path.join(Path.home(), "bf2asm", "backends.json")
+    json_path = os.path.join(Path.home(), name, "backends.json")
     if os.path.exists(json_path):
         with open(json_path) as f:
             extra = json.load(f)
@@ -98,13 +116,13 @@ def main():
 
     # check arguments
     if len(sys.argv) < 5:
-        print(f"Usage: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
+        warning_print(f"Usage: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
     arch, os_name, bf_file = sys.argv[1], sys.argv[2], sys.argv[3]
     backend = BACKENDS.get((arch, os_name))
     if not backend:
-        print(f"Backend for {arch}/{os_name} not implemented yet")
+        error_print(f"Backend for {arch}/{os_name} not implemented yet")
         sys.exit(1)
 
     # determine cache path
@@ -197,7 +215,7 @@ def main():
     with open(cache_file, "w") as f:
         json.dump(cache, f, indent=2)
 
-    print(f"asm generated in output.asm (cache stored in {cache_file})")
+    success_print(f"asm generated in output.asm (cache stored in {cache_file})")
 
 if __name__ == "__main__":
     main()
