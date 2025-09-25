@@ -26,6 +26,23 @@ Supports multiple CPU architectures and OSes, with caching for faster repeated c
 
 ---
 
+## Installing
+
+Installing is simple - just follow these steps:
+
+1. **Clone the repository**  
+```bash
+git clone https://github.com/akaruinekooff/bf2asm.git
+cd bf2asm
+```
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+3. **(Optional) Install localization support**
+
+For localization, get the [anLocales library](https://github.com/akaruinekooff/anLocales) and follow its instructions.
+
 ## Usage
 
 ```bash
@@ -36,6 +53,7 @@ python bf2asm.py <arch> <os> <input.b> <output.asm>
 * `<os>` – target operating system (`linux`)
 * `<input.b>` – path to your Brainfuck source file
 * `<output.asm>` – path where generated ASM will be written
+
 
 ### Example
 
