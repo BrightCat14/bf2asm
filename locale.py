@@ -1,5 +1,7 @@
 import ctypes
+import json
 import os
+import shutil
 from ctypes.util import find_library
 from pathlib import Path
 
@@ -12,6 +14,8 @@ unmatched_brackets = ""
 usage = ""
 generated_asm = ""
 backend_not_implemented = ""
+or_keyword = ""
+changing_lang_to = ""
 
 class AnLocales(ctypes.Structure):
     pass
@@ -22,9 +26,27 @@ class Locale(ctypes.Structure):
 locales_folder = os.path.join(Path.home(), bf2asm.name, "locales")
 locales_temp_folder = os.path.join(locales_folder, "temp")
 locales_settings = os.path.join(locales_folder, "settings.json")
+src_root = Path("locales")
+
+def change_language(lang_code):
+    with open(locales_settings, "r", encoding="utf-8") as f:
+        settings_lang = json.load(f)
+    settings_lang["default_locale"] = lang_code
+    with open(locales_settings, "w", encoding="utf-8") as f:
+        json.dump(settings_lang, f, ensure_ascii=False, indent=4)
 
 def init():
-    global unmatched_brackets, usage, generated_asm, backend_not_implemented
+    global unmatched_brackets, usage, generated_asm, backend_not_implemented, or_keyword, changing_lang_to
+
+    Path(locales_folder).mkdir(parents=True, exist_ok=True)
+
+    for locale_dir in src_root.iterdir():
+        if locale_dir.is_dir():
+            dst_dir = Path(locales_folder) / locale_dir.name
+            try:
+                shutil.copytree(locale_dir, dst_dir, dirs_exist_ok=True)
+            except shutil.Error:
+                pass # just skipping, maybe folder/file is copied as root
 
     if locales_library is not None:
         lib = ctypes.CDLL(locales_library)
@@ -78,8 +100,12 @@ def init():
         usage = lib.locale_t(loc, b"usage").decode()
         generated_asm = lib.locale_t(loc, b"generated_asm").decode()
         backend_not_implemented = lib.locale_t(loc, b"backend_not_implemented").decode()
+        or_keyword = lib.locale_t(loc, b"or").decode()
+        changing_lang_to = lib.locale_t(loc, b"changing_lang_to").decode()
     else:
         unmatched_brackets = "Unmatched {bracket} in bf code"
         usage = "Usage"
         generated_asm = "asm generated in {output_file} (cache stored in {cache_file})"
         backend_not_implemented = "Backend for {arch}/{os_name} not implemented yet"
+        or_keyword = "or"
+        changing_lang_to = "Changing language to"

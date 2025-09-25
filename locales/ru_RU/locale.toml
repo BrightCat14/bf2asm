@@ -1,0 +1,6 @@
+backend_not_implemented = ["Бэкенд для {arch}/{os_name} ещё не сделан"]
+unmatched_brackets = ["Несовпадение {bracket} в bf коде"]
+usage = ["Использование"]
+generated_asm = ["ассемблер сгенерирован в {output_file} (кэш храниться в {cache_file})"]
+or = ["или"]
+changing_lang_to = ["Меняем язык на"]

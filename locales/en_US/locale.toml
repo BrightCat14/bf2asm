@@ -1,0 +1,6 @@
+backend_not_implemented = ["Backend for {arch}/{os_name} not implemented yet"]
+unmatched_brackets = ["Unmatched {bracket} in bf code"]
+usage = ["Usage"]
+generated_asm = ["asm generated in {output_file} (cache stored in {cache_file})"]
+or = ["or"]
+changing_lang_to = ["Changing language to"]

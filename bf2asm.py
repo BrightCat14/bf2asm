@@ -114,12 +114,22 @@ def main():
             arch, os_name = k.split("_", 1)
             BACKENDS[(arch, os_name)] = v
 
-    # check arguments
+    if len(sys.argv) < 2:
+        warning_print(f"{locale.usage}: python bf2asm.py <arch> <os> <input.b> <output.asm> {locale.or_keyword} settings lang <locale>")
+        sys.exit(1)
+
+    if sys.argv[1] == "settings" and len(sys.argv) >= 4 and sys.argv[2] == "lang":
+        lang_code = sys.argv[3]
+        success_print(f"{locale.changing_lang_to} {lang_code}")
+        locale.change_language(lang_code)
+        sys.exit(0)
+
     if len(sys.argv) < 5:
         warning_print(f"{locale.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
     arch, os_name, bf_file, output_file = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+
     backend = BACKENDS.get((arch, os_name))
     if not backend:
         error_print(locale.backend_not_implemented.format(arch=arch, os_name=os_name))

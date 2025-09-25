@@ -1,0 +1,25 @@
+{
+  "LC_TIME": {
+    "days": ["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"],
+    "months": ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"],
+    "date_fmt": "%d.%m.%Y"
+  },
+  "LC_NUMERIC": {
+    "decimal_point": ",",
+    "thousands_sep": " ",
+    "grouping": [3]
+  },
+  "LC_MONETARY": {
+    "currency_symbol": "₽",
+    "int_curr_symbol": "RUB",
+    "mon_decimal_point": ",",
+    "mon_thousands_sep": " ",
+    "positive_sign": "",
+    "negative_sign": "-",
+    "frac_digits": 2
+  },
+  "LC_COLLATE": {
+    "sort_order": "unicode"
+  },
+  "PLURAL_RULES": "n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2"
+}

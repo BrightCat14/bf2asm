@@ -1,0 +1,26 @@
+{
+  "LC_TIME": {
+    "days": ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "months": ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    "date_fmt": "%Y-%m-%d"
+  },
+  "LC_NUMERIC": {
+    "decimal_point": ".",
+    "thousands_sep": ",",
+    "grouping": [3]
+  },
+  "LC_MONETARY": {
+    "currency_symbol": "$",
+    "int_curr_symbol": "USD",
+    "mon_decimal_point": ".",
+    "mon_thousands_sep": ",",
+    "positive_sign": "",
+    "negative_sign": "-",
+    "frac_digits": 2
+  },
+  "LC_COLLATE": {
+    "sort_order": "unicode"
+  },
+  "PLURAL_RULES": "n != 1"
+}
+
