@@ -7,6 +7,8 @@ from pathlib import Path
 import colorama
 from colorama import Fore
 
+import locale
+
 colorama.init()
 
 name = "bf2asm"
@@ -48,7 +50,8 @@ mov rdx, 1
 mov rsi, rsi
 syscall""",
         "exit": "mov rax, 60\nxor rdi,rdi\nsyscall",
-        "header": "section .bss\n    tape resb 30000\nsection .text\nglobal _start\n_start:"
+        "header": "section .bss\n    tape resb 30000\nsection .text\nglobal _start\n_start:",
+        "cmp_byte_for_loop": "cmp byte [rsi], 0"
     },
     ("arm64", "linux"): {
         "ptr_init": "adr x19, tape",
@@ -67,7 +70,8 @@ mov x1, x19
 mov x8, #63
 svc 0""",
         "exit": "mov x8, #93\nmov x0, #0\nsvc 0",
-        "header": ".bss\n    tape: .space 30000\n.text\nglobal _start\n_start:"
+        "header": ".bss\n    tape: .space 30000\n.text\nglobal _start\n_start:",
+        "cmp_byte_for_loop": "cmp byte [rsi], 0"
     },
     ("x86_64", "windows"): {
         "ptr_init": "mov rsi, tape",
@@ -92,12 +96,15 @@ svc 0""",
     global main
     extern printf, getchar
     main:
-        mov rsi, tape"""
+        mov rsi, tape""",
+        "cmp_byte_for_loop": "cmp byte [rsi], 0"
     }
 }
 
 
 def main():
+    locale.init()
+
     # load extra backends from backends.json if exists
     json_path = os.path.join(Path.home(), name, "backends.json")
     if os.path.exists(json_path):
@@ -109,13 +116,13 @@ def main():
 
     # check arguments
     if len(sys.argv) < 5:
-        warning_print(f"Usage: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
+        warning_print(f"{locale.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
     arch, os_name, bf_file, output_file = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
     backend = BACKENDS.get((arch, os_name))
     if not backend:
-        error_print(f"Backend for {arch}/{os_name} not implemented yet")
+        error_print(locale.backend_not_implemented.format(arch=arch, os_name=os_name))
         sys.exit(1)
 
     # determine cache path
@@ -154,9 +161,10 @@ def main():
         elif c == ']':
             balance -= 1
         if balance < 0:
-            raise BFSyntaxError("Unmatched ']' in bf code")
+            raise BFSyntaxError(locale.unmatched_brackets.format(bracket="']'"))
     if balance > 0:
-        raise BFSyntaxError("Unmatched '[' in bf code")
+        raise BFSyntaxError(locale.unmatched_brackets.format(bracket="'['"))
+
 
     # generate asm with cache, keeping loop_stack across chunks
     asm_code = backend["header"] + "\n    " + backend["ptr_init"] + "\n"
@@ -194,19 +202,19 @@ def main():
                 start_label = f"loop_start_{label_id}"
                 end_label = f"loop_end_{label_id}"
                 loop_stack.append((start_label, end_label))
-                chunk_asm += f"{start_label}:\n    cmp byte [rsi], 0\n    je {end_label}\n"
+                chunk_asm += f"{start_label}:\n    {backend.get("cmp_byte_for_loop", "cmp byte [rsi], 0")}\n    je {end_label}\n"
                 label_id += 1
             elif c == ']':
                 if not loop_stack:
-                    raise BFSyntaxError("Unmatched ']' in bf code during generation")
+                    raise BFSyntaxError(locale.unmatched_brackets.format(bracket="']'"))
                 start_label, end_label = loop_stack.pop()
-                chunk_asm += f"    cmp byte [rsi], 0\n    jne {start_label}\n{end_label}:\n"
+                chunk_asm += f"    {backend.get("cmp_byte_for_loop", "cmp byte [rsi], 0")}\n    jne {start_label}\n{end_label}:\n"
             elif c == '#':
                 comment_text = ""
                 while j < len(chunk) and chunk[j] != '\n':
                     comment_text += chunk[j]
                     j += 1
-                chunk_asm += f"    ; {comment_text.lstrip("# ")}\n"
+                chunk_asm += f"    ;{comment_text.lstrip("#")}\n"
                 continue
             j += 1
 
@@ -226,7 +234,7 @@ def main():
     with open(cache_file, "w") as f:
         json.dump(cache, f, indent=2)
 
-    success_print(f"asm generated in output.asm (cache stored in {cache_file})")
+    success_print(locale.generated_asm.format(output_file=output_file, cache_file=cache_file))
 
 if __name__ == "__main__":
     main()
