@@ -9,13 +9,8 @@ import bf2asm
 
 locales_library = find_library("anLocales")
 
-# just empty strings
-unmatched_brackets = ""
-usage = ""
-generated_asm = ""
-backend_not_implemented = ""
-or_keyword = ""
-changing_lang_to = ""
+# empty strings to declare variables
+unmatched_brackets = usage = generated_asm = backend_not_implemented = or_keyword = changing_lang_to = ""
 
 class AnLocales(ctypes.Structure):
     pass
@@ -46,7 +41,7 @@ def init():
             try:
                 shutil.copytree(locale_dir, dst_dir, dirs_exist_ok=True)
             except shutil.Error:
-                pass # just skipping, maybe folder/file is copied as root
+                pass # just skipping, maybe folder/file is already copied as root
 
     if locales_library is not None:
         lib = ctypes.CDLL(locales_library)

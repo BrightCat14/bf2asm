@@ -98,7 +98,35 @@ svc 0""",
     main:
         mov rsi, tape""",
         "cmp_byte_for_loop": "cmp byte [rsi], 0"
+    },
+    ("aarch64", "windows"): {
+        "ptr_init": "adr x1, tape",
+        "inc_ptr": "add x1, x1, #1",
+        "dec_ptr": "sub x1, x1, #1",
+        "inc_val": "ldrb w2, [x1]\nadd w2, w2, #1\nstrb w2, [x1]",
+        "dec_val": "ldrb w2, [x1]\nsub w2, w2, #1\nstrb w2, [x1]",
+        "output": """ldrb w0, [x1]
+        adr x1, fmt
+        bl printf""",
+        "input": "bl getchar\nstrb w0, [x1]",
+        "exit": "ret",
+        "header": """.data
+    fmt: .asciz "%c"
+    
+    .bss
+    tape: .skip 30000
+    
+    .text
+    .global main
+    .extern printf
+    .extern getchar
+    main:
+        adr x1, tape""",
+        "cmp_byte_for_loop": "ldrb w2, [x1]\ncmp w2, #0"
     }
+    # TODO: Add x86 windows and x86 linux
+    # TODO: Add macos arm64, macos x86_64
+    # TODO: Add govnocore32, govnocore24 xDD
 }
 
 
@@ -106,6 +134,17 @@ def main():
     locale.init()
 
     # load extra backends from backends.json if exists
+
+    # TODO: Improve the backend system:
+    #   - make a folder with backends instead of a single file with backends
+    #     like this:
+    #     .
+    #     └── backends
+    #         └── enchanced_linux_arm64
+    #             ├── backend.json
+    #             └── info.toml
+    #   - maybe add check for backend duplication
+
     json_path = os.path.join(Path.home(), name, "backends.json")
     if os.path.exists(json_path):
         with open(json_path) as f:
@@ -115,7 +154,7 @@ def main():
             BACKENDS[(arch, os_name)] = v
 
     if len(sys.argv) < 2:
-        warning_print(f"{locale.usage}: python bf2asm.py <arch> <os> <input.b> <output.asm> {locale.or_keyword} settings lang <locale>")
+        warning_print(f"{locale.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm> {locale.or_keyword} settings lang <locale>") # TODO: I know that locale.or_keyword is shit, but really im lazy, wait 5000 years to fix it lol
         sys.exit(1)
 
     if sys.argv[1] == "settings" and len(sys.argv) >= 4 and sys.argv[2] == "lang":
@@ -235,6 +274,9 @@ def main():
 
     # add exit syscall
     asm_code += f"    {backend['exit']}\n"
+
+    # add footer
+    asm_code += f"{backend.get("footer", "")}\n"
 
     # write output.asm
     with open(output_file, "w") as f:
