@@ -5,7 +5,8 @@ import shutil
 from ctypes.util import find_library
 from pathlib import Path
 
-import bf2asm
+# App name - avoids circular import with bf2asm
+APP_NAME = "bf2asm"
 
 locales_library = find_library("anLocales")
 
@@ -18,7 +19,7 @@ class AnLocales(ctypes.Structure):
 class Locale(ctypes.Structure):
     pass
 
-locales_folder = os.path.join(Path.home(), bf2asm.name, "locales")
+locales_folder = os.path.join(Path.home(), APP_NAME, "locales")
 locales_temp_folder = os.path.join(locales_folder, "temp")
 locales_settings = os.path.join(locales_folder, "settings.json")
 src_root = Path("locales")
@@ -34,6 +35,12 @@ def init():
     global unmatched_brackets, usage, generated_asm, backend_not_implemented, or_keyword, changing_lang_to
 
     Path(locales_folder).mkdir(parents=True, exist_ok=True)
+
+    # Create settings.json if it doesn't exist
+    if not os.path.exists(locales_settings):
+        default_settings = {"default_locale": "en_US"}
+        with open(locales_settings, "w", encoding="utf-8") as f:
+            json.dump(default_settings, f, ensure_ascii=False, indent=4)
 
     for locale_dir in src_root.iterdir():
         if locale_dir.is_dir():

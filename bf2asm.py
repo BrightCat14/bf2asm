@@ -7,7 +7,7 @@ from pathlib import Path
 import colorama
 from colorama import Fore
 
-import locale
+import l10n
 
 colorama.init()
 
@@ -131,7 +131,7 @@ svc 0""",
 
 
 def main():
-    locale.init()
+    l10n.init()
 
     # load extra backends from backends.json if exists
 
@@ -154,24 +154,24 @@ def main():
             BACKENDS[(arch, os_name)] = v
 
     if len(sys.argv) < 2:
-        warning_print(f"{locale.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm> {locale.or_keyword} settings lang <locale>") # TODO: I know that locale.or_keyword is shit, but really im lazy, wait 5000 years to fix it lol
+        warning_print(f"{l10n.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm> {l10n.or_keyword} settings lang <locale>") # TODO: I know that locale.or_keyword is shit, but really im lazy, wait 5000 years to fix it lol
         sys.exit(1)
 
     if sys.argv[1] == "settings" and len(sys.argv) >= 4 and sys.argv[2] == "lang":
         lang_code = sys.argv[3]
-        success_print(f"{locale.changing_lang_to} {lang_code}")
-        locale.change_language(lang_code)
+        success_print(f"{l10n.changing_lang_to} {lang_code}")
+        l10n.change_language(lang_code)
         sys.exit(0)
 
     if len(sys.argv) < 5:
-        warning_print(f"{locale.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
+        warning_print(f"{l10n.usage}: python {sys.argv[0]} <arch> <os> <input.b> <output.asm>")
         sys.exit(1)
 
     arch, os_name, bf_file, output_file = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 
     backend = BACKENDS.get((arch, os_name))
     if not backend:
-        error_print(locale.backend_not_implemented.format(arch=arch, os_name=os_name))
+        error_print(l10n.backend_not_implemented.format(arch=arch, os_name=os_name))
         sys.exit(1)
 
     # determine cache path
@@ -210,9 +210,9 @@ def main():
         elif c == ']':
             balance -= 1
         if balance < 0:
-            raise BFSyntaxError(locale.unmatched_brackets.format(bracket="']'"))
+            raise BFSyntaxError(l10n.unmatched_brackets.format(bracket="']'"))
     if balance > 0:
-        raise BFSyntaxError(locale.unmatched_brackets.format(bracket="'['"))
+        raise BFSyntaxError(l10n.unmatched_brackets.format(bracket="'['"))
 
 
     # generate asm with cache, keeping loop_stack across chunks
@@ -251,19 +251,19 @@ def main():
                 start_label = f"loop_start_{label_id}"
                 end_label = f"loop_end_{label_id}"
                 loop_stack.append((start_label, end_label))
-                chunk_asm += f"{start_label}:\n    {backend.get("cmp_byte_for_loop", "cmp byte [rsi], 0")}\n    je {end_label}\n"
+                chunk_asm += f"{start_label}:\n    {backend.get('cmp_byte_for_loop', 'cmp byte [rsi], 0')}\n    je {end_label}\n"
                 label_id += 1
             elif c == ']':
                 if not loop_stack:
-                    raise BFSyntaxError(locale.unmatched_brackets.format(bracket="']'"))
+                    raise BFSyntaxError(l10n.unmatched_brackets.format(bracket="']'"))
                 start_label, end_label = loop_stack.pop()
-                chunk_asm += f"    {backend.get("cmp_byte_for_loop", "cmp byte [rsi], 0")}\n    jne {start_label}\n{end_label}:\n"
+                chunk_asm += f"    {backend.get('cmp_byte_for_loop', 'cmp byte [rsi], 0')}\n    jne {start_label}\n{end_label}:\n"
             elif c == '#':
                 comment_text = ""
                 while j < len(chunk) and chunk[j] != '\n':
                     comment_text += chunk[j]
                     j += 1
-                chunk_asm += f"    ;{comment_text.lstrip("#")}\n"
+                chunk_asm += f"    ;{comment_text.lstrip('#')}\n"
                 continue
             j += 1
 
@@ -276,7 +276,7 @@ def main():
     asm_code += f"    {backend['exit']}\n"
 
     # add footer
-    asm_code += f"{backend.get("footer", "")}\n"
+    asm_code += f"{backend.get('footer', '')}\n"
 
     # write output.asm
     with open(output_file, "w") as f:
@@ -286,7 +286,7 @@ def main():
     with open(cache_file, "w") as f:
         json.dump(cache, f, indent=2)
 
-    success_print(locale.generated_asm.format(output_file=output_file, cache_file=cache_file))
+    success_print(l10n.generated_asm.format(output_file=output_file, cache_file=cache_file))
 
 if __name__ == "__main__":
     main()
